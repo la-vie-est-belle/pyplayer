@@ -1,5 +1,4 @@
 import shutil
-import sys
 from pathlib import Path
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -15,6 +14,7 @@ class ProjectTreeView(QTreeView):
         self._clipboard = QApplication.clipboard()
         self._contextMenu = ProjectTreeViewMenu()
         self._currentClickedIndex = None
+        self._cutIndexSet = set()
 
         self._setUI()
 
@@ -27,11 +27,14 @@ class ProjectTreeView(QTreeView):
         self.setObjectName("projectTreeView")
         self.setModel(self._fileSystemModel)
 
+        self.setAcceptDrops(True)
+        self.setDragEnabled(True)
+
         self.setHeaderHidden(True)
         self.setColumnHidden(1, True)
         self.setColumnHidden(2, True)
         self.setColumnHidden(3, True)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setSelectionMode(QAbstractItemView.MultiSelection)
 
     def _setSignal(self):
         self.doubleClicked.connect(self._openFile)
@@ -47,45 +50,45 @@ class ProjectTreeView(QTreeView):
         self._contextMenu.cutSignal.connect(self._cut)
 
     def _setPath(self, path):
-        _index = self._fileSystemModel.setRootPath(path)
-        self.setRootIndex(_index)
+        index = self._fileSystemModel.setRootPath(path)
+        self.setRootIndex(index)
 
     def _openFile(self, index):
         if not self._fileSystemModel.isDir(index):
             print("打开")
 
     def _createNewFolder(self):
-        _folderName, _ok = QInputDialog.getText(self, "新建文件夹", "请输入文件夹名称")
-        if not _ok:
+        folderName, ok = QInputDialog.getText(self, "新建文件夹", "请输入文件夹名称")
+        if not ok:
             return
 
-        _targetPath = self._fileSystemModel.filePath(self._currentClickedIndex)
-        _targetPath = Path(_targetPath) if _targetPath else Path(self._projectPath)
-        _targetPath = (_targetPath / _folderName) if _targetPath.is_dir() else (_targetPath.parent / _folderName)
+        targetPath = self._fileSystemModel.filePath(self._currentClickedIndex)
+        targetPath = Path(targetPath) if targetPath else Path(self._projectPath)
+        targetPath = (targetPath / folderName) if targetPath.is_dir() else (targetPath.parent / folderName)
 
-        if _targetPath.exists():
-            QMessageBox.critical(self, '错误', f'{_folderName}已存在')
+        if targetPath.exists():
+            QMessageBox.critical(self, '错误', f'{folderName}已存在')
             return
 
-        _targetPath.mkdir()
+        targetPath.mkdir()
         self.update(self._currentClickedIndex)
         self.expand(self._currentClickedIndex)
 
     def _createNewFile(self, ext):
-        _fileName, _ok = QInputDialog.getText(self, "新建文件", "请输入文件名称")
-        if not _ok:
+        fileName, ok = QInputDialog.getText(self, "新建文件", "请输入文件名称")
+        if not ok:
             return
 
-        _fileName = f"{_fileName}.{ext}"
-        _targetPath = self._fileSystemModel.filePath(self._currentClickedIndex)
-        _targetPath = Path(_targetPath) if _targetPath else Path(self._projectPath)
-        _targetPath = (_targetPath / _fileName) if _targetPath.is_dir() else (_targetPath.parent / _fileName)
+        fileName = f"{fileName}.{ext}"
+        targetPath = self._fileSystemModel.filePath(self._currentClickedIndex)
+        targetPath = Path(targetPath) if targetPath else Path(self._projectPath)
+        targetPath = (targetPath / fileName) if targetPath.is_dir() else (targetPath.parent / fileName)
 
-        if _targetPath.exists():
-            QMessageBox.critical(self, '错误', f'{_fileName}已存在')
+        if targetPath.exists():
+            QMessageBox.critical(self, '错误', f'{fileName}已存在')
             return
 
-        _targetPath.touch()
+        targetPath.touch()
         self.update(self._currentClickedIndex)
         self.expand(self._currentClickedIndex)
 
@@ -94,37 +97,120 @@ class ProjectTreeView(QTreeView):
         self.edit(self._currentClickedIndex)
 
     def _delete(self):
-        _choice = QMessageBox.question(self, '删除', '确定要删除吗？', QMessageBox.Yes | QMessageBox.No)
+        choice = QMessageBox.question(self, '删除', '确定要删除吗？', QMessageBox.Yes | QMessageBox.No)
 
-        if _choice == QMessageBox.No:
+        if choice == QMessageBox.No:
             return
 
-        for _index in self.selectedIndexes():
-            path = Path(self._fileSystemModel.filePath(_index))
+        for index in self.selectedIndexes():
+            path = Path(self._fileSystemModel.filePath(index))
             shutil.rmtree(path) if path.is_dir() else path.unlink()
-            self.update(_index)
+            self.update(index)
 
     def _paste(self):
-        ...
+        data = self._clipboard.mimeData()
+        if not data.hasUrls():
+            return
+
+        for url in data.urls():
+            originalPath = Path(url.toString().replace('file://', ''))
+            fileOrFolderName = originalPath.name
+
+            targetPath = self._fileSystemModel.filePath(self._currentClickedIndex)
+            targetPath = Path(targetPath) if targetPath else Path(self._projectPath)
+            targetPath = (targetPath / fileOrFolderName) if targetPath.is_dir() else (targetPath.parent / fileOrFolderName)
+
+            if self._cutIndexSet:
+                self._pasteForCut(originalPath, fileOrFolderName, targetPath)
+            else:
+                self._pasteForCopy(originalPath, fileOrFolderName, targetPath)
+
+        self.update()
+
+    def _pasteForCopy(self, originalPath, fileOrFolderName, targetPath):
+        if not targetPath.exists():
+            if originalPath.is_dir():
+                shutil.copytree(originalPath, targetPath)
+            else:
+                shutil.copyfile(originalPath, targetPath)
+        else:
+            if originalPath.is_dir():
+                QMessageBox.critical(self, '文件夹已存在', f'该目录下已存在文件夹{fileOrFolderName}！', QMessageBox.Ok)
+            else:
+                choice = QMessageBox.question(self, '文件已存在', f'该目录下已存在{fileOrFolderName}，是否覆盖？', QMessageBox.Yes | QMessageBox.No)
+                if choice == QMessageBox.Yes:
+                    shutil.copyfile(originalPath, targetPath)
+
+    def _pasteForCut(self, originalPath, fileOrFolderName, targetPath):
+        if not targetPath.exists():
+            originalPath.replace(targetPath)
+        else:
+            if originalPath.is_dir():
+                QMessageBox.critical(self, '文件夹已存在', f'该目录下已存在文件夹{fileOrFolderName}！', QMessageBox.Ok)
+            else:
+                choice = QMessageBox.question(self, '文件已存在', f'该目录下已存在{fileOrFolderName}，是否覆盖？', QMessageBox.Yes | QMessageBox.No)
+                if choice == QMessageBox.Yes:
+                    originalPath.replace(targetPath)
+
+        self._clipboard.clear()
+        self._cutIndexSet.clear()
 
     def _copy(self):
-        ...
+        urlList = []
+        data = QMimeData()
+        self._cutIndexSet.clear()
+
+        for index in self.selectedIndexes():
+            path = self._fileSystemModel.filePath(index)
+            urlList.append(QUrl(path))
+
+        data.setUrls(urlList)
+        self.clearSelection()
+        self._clipboard.setMimeData(data)
 
     def _cut(self):
-        ...
+        urlList = []
+        data = QMimeData()
+        self._cutIndexSet.clear()
+
+        for index in self.selectedIndexes():
+            path = self._fileSystemModel.filePath(index)
+            urlList.append(QUrl(path))
+            self._cutIndexSet.add(index)
+
+        data.setUrls(urlList)
+        self.clearSelection()
+        self._clipboard.setMimeData(data)
 
     def contextMenuEvent(self, event):
-        _index = self.indexAt(event.pos())
-        self._currentClickedIndex = _index
+        index = self.indexAt(event.pos())
+        self._currentClickedIndex = index
 
-        if not _index.isValid():
+        if not index.isValid():
             self._contextMenu.execBlankAreaMainMenu(event.globalPos())
             return
 
-        if not self._fileSystemModel.isDir(_index):
+        if not self._fileSystemModel.isDir(index):
             self._contextMenu.execFileMainMenu(event.globalPos())
         else:
             self._contextMenu.execFolderMainMenu(event.globalPos())
+
+    def drawRow(self, painter, option, index):
+        super(ProjectTreeView, self).drawRow(painter, option, index)
+        brush = QBrush(QColor(0, 105, 217, 50))
+        pen = QPen(QColor(0, 105, 217, 50))
+        painter.setBrush(brush)
+        painter.setPen(pen)
+
+        for cutIndex in self._cutIndexSet:
+            if index != cutIndex:
+                continue
+
+            x = option.rect.x()
+            y = option.rect.y()
+            width = option.rect.width()
+            height = option.rect.height()
+            painter.drawRect(x, y, width, height)
 
 
 class SearchLine(QLineEdit):
