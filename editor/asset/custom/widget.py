@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 from PyQt5.QtGui import *
@@ -34,7 +35,7 @@ class ProjectTreeView(QTreeView):
         self.setColumnHidden(1, True)
         self.setColumnHidden(2, True)
         self.setColumnHidden(3, True)
-        self.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
     def _setSignal(self):
         self.doubleClicked.connect(self._openFile)
@@ -55,7 +56,8 @@ class ProjectTreeView(QTreeView):
 
     def _openFile(self, index):
         if not self._fileSystemModel.isDir(index):
-            print("打开")
+            path = self._fileSystemModel.filePath(index)
+            os.system(f"/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code {self._projectPath} {path}")
 
     def _createNewFolder(self):
         folderName, ok = QInputDialog.getText(self, "新建文件夹", "请输入文件夹名称")
@@ -79,9 +81,9 @@ class ProjectTreeView(QTreeView):
         if not ok:
             return
 
-        fileName = f"{fileName}.{ext}"
         targetPath = self._fileSystemModel.filePath(self._currentClickedIndex)
         targetPath = Path(targetPath) if targetPath else Path(self._projectPath)
+        fileName = f"{fileName}{ext}" if not fileName.endswith(ext) else fileName
         targetPath = (targetPath / fileName) if targetPath.is_dir() else (targetPath.parent / fileName)
 
         if targetPath.exists():
@@ -103,9 +105,13 @@ class ProjectTreeView(QTreeView):
             return
 
         for index in self.selectedIndexes():
-            path = Path(self._fileSystemModel.filePath(index))
-            shutil.rmtree(path) if path.is_dir() else path.unlink()
-            self.update(index)
+            try:
+                path = Path(self._fileSystemModel.filePath(index))
+                shutil.rmtree(path) if path.is_dir() else path.unlink()
+            except FileNotFoundError:
+                pass
+
+        self.update()
 
     def _paste(self):
         data = self._clipboard.mimeData()
@@ -126,6 +132,9 @@ class ProjectTreeView(QTreeView):
                 self._pasteForCopy(originalPath, fileOrFolderName, targetPath)
 
         self.update()
+        if self._cutIndexSet:
+            self._clipboard.clear()
+            self._cutIndexSet.clear()
 
     def _pasteForCopy(self, originalPath, fileOrFolderName, targetPath):
         if not targetPath.exists():
@@ -142,6 +151,11 @@ class ProjectTreeView(QTreeView):
                     shutil.copyfile(originalPath, targetPath)
 
     def _pasteForCut(self, originalPath, fileOrFolderName, targetPath):
+        # 不用剪切到原来位置
+        # 不能剪切到自身目录内
+        if originalPath == targetPath or originalPath == targetPath.parent:
+            return
+
         if not targetPath.exists():
             originalPath.replace(targetPath)
         else:
@@ -151,9 +165,6 @@ class ProjectTreeView(QTreeView):
                 choice = QMessageBox.question(self, '文件已存在', f'该目录下已存在{fileOrFolderName}，是否覆盖？', QMessageBox.Yes | QMessageBox.No)
                 if choice == QMessageBox.Yes:
                     originalPath.replace(targetPath)
-
-        self._clipboard.clear()
-        self._cutIndexSet.clear()
 
     def _copy(self):
         urlList = []
@@ -182,6 +193,19 @@ class ProjectTreeView(QTreeView):
         self.clearSelection()
         self._clipboard.setMimeData(data)
 
+    def getFilesAndFolders(self):
+        filesAndFolders = Path(self._projectPath).rglob("*")
+        return filesAndFolders
+
+    def focusInEvent(self, event):
+        super(ProjectTreeView, self).focusInEvent(event)
+        # 如果用户在资源管理器内剪切后，
+        # 又在编辑器外部剪切某文件，
+        # 那么就要去除资源管理器中的剪切效果。
+        if not self._clipboard.mimeData().hasUrls():
+            self._cutIndexSet.clear()
+            return
+
     def contextMenuEvent(self, event):
         index = self.indexAt(event.pos())
         self._currentClickedIndex = index
@@ -195,7 +219,33 @@ class ProjectTreeView(QTreeView):
         else:
             self._contextMenu.execFolderMainMenu(event.globalPos())
 
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+
+    def dragMoveEvent(self, event):
+        ...
+
+    def dropEvent(self, event):
+        data = event.mimeData()
+        if not data.hasUrls():
+            return
+
+        index = self.indexAt(event.pos())
+        for url in data.urls():
+            originalPath = Path(url.toString().replace('file://', ''))
+            fileOrFolderName = originalPath.name
+
+            targetPath = self._fileSystemModel.filePath(index)
+            targetPath = Path(targetPath) if targetPath else Path(self._projectPath)
+            targetPath = (targetPath / fileOrFolderName) if targetPath.is_dir() else (targetPath.parent / fileOrFolderName)
+
+            self._pasteForCut(originalPath, fileOrFolderName, targetPath)
+
+        self.update()
+
     def drawRow(self, painter, option, index):
+        """用于实现文件被剪切时的效果"""
         super(ProjectTreeView, self).drawRow(painter, option, index)
         brush = QBrush(QColor(0, 105, 217, 50))
         pen = QPen(QColor(0, 105, 217, 50))
@@ -216,24 +266,47 @@ class ProjectTreeView(QTreeView):
 class SearchLine(QLineEdit):
     def __init__(self):
         super(SearchLine, self).__init__()
-
         self._setUI()
 
     def _setUI(self):
         self._setWindowAttribute()
-        self._setSignal()
 
     def _setWindowAttribute(self):
         self.setObjectName("searchLine")
         self.setPlaceholderText("搜索资源")
+        self.setFocusPolicy(Qt.ClickFocus)
+        self.setAttribute(Qt.WA_MacShowFocusRect, 0)
+
+
+class SearchListView(QListView):
+    def __init__(self):
+        super(SearchListView, self).__init__()
+        self._standardItemModel = QStandardItemModel()
+        self._setUI()
+
+    def _setUI(self):
+        self._setWidget()
+        self._setSignal()
+
+    def _setWidget(self):
+        self.setModel(self._standardItemModel)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     def _setSignal(self):
-        self.textChanged.connect(self._search)
+        self.doubleClicked.connect(self._openFile)
 
-    def _search(self, keyword):
-        print(keyword)
+    def _openFile(self, index):
+        item = self._standardItemModel.itemFromIndex(index)
+        itemPath = item.toolTip()
+        if Path(itemPath).is_file():
+            projectPath = Path('.').cwd().parent.parent
+            os.system(f"/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code {projectPath} {itemPath}")
 
-
-
-
-
+    def setResult(self, matchList):
+        self._standardItemModel.clear()
+        style = QApplication.style()
+        for f in matchList:
+            icon = style.standardIcon(QStyle.SP_FileIcon) if f.is_file() else style.standardIcon(QStyle.SP_DirIcon)
+            item = QStandardItem(icon, str(f.name))
+            item.setToolTip(str(f))
+            self._standardItemModel.appendRow(item)

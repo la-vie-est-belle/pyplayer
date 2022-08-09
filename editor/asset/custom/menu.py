@@ -53,9 +53,9 @@ class ProjectTreeViewMenu(QObject):
         self._copyAction.triggered.connect(self.copySignal.emit)
         self._cutAction.triggered.connect(self.cutSignal.emit)
 
-        self._newPyFileAction.triggered.connect(lambda: self.newFileSignal.emit("py"))
-        self._newTxtFileAction.triggered.connect(lambda: self.newFileSignal.emit("txt"))
-        self._newJsonFileAction.triggered.connect(lambda: self.newFileSignal.emit("json"))
+        self._newPyFileAction.triggered.connect(lambda: self.newFileSignal.emit(".py"))
+        self._newTxtFileAction.triggered.connect(lambda: self.newFileSignal.emit(".txt"))
+        self._newJsonFileAction.triggered.connect(lambda: self.newFileSignal.emit(".json"))
 
     def _setAction(self):
         self._setSubMenuAction()

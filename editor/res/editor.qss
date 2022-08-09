@@ -1,7 +1,10 @@
 QLineEdit#searchLine {
-    padding-left: 2px
+    padding-left: 2px;
 }
 
+QTreeView#projectTreeView {
+
+}
 QTreeView#projectTreeView::item:hover {
-    color: rgba(0, 0, 255, 180)
+    color: rgba(0, 0, 255, 180);
 }
