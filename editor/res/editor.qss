@@ -1,10 +1,47 @@
-QLineEdit#searchLine {
+/* asset */
+QLineEdit#assetSearchLine {
     padding-left: 2px;
 }
 
-QTreeView#projectTreeView {
-
-}
-QTreeView#projectTreeView::item:hover {
+QTreeView#assetProjectTreeView::item:hover {
     color: rgba(0, 0, 255, 180);
+}
+
+/* console */
+QLineEdit#consoleSearchLine {
+    padding-left: 2px;
+    min-height: 20px;
+    border-radius: 2px;
+}
+
+QPushButton#consoleClearButton {
+    border-image: url(../res/console/clear.png);
+    max-width: 17px;
+    max-height: 17px;
+}
+
+QPushButton#consoleClearButton:hover {
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 100);
+}
+
+QPushButton#consoleClearButton:pressed {
+    border-radius: 3px;
+    background-color: rgba(230, 230, 230, 100);
+}
+
+QPushButton#consoleLogButton {
+    border-image: url(../res/console/log.png);
+    max-width: 17px;
+    max-height: 17px;
+}
+
+QPushButton#consoleLogButton:hover {
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 100);
+}
+
+QPushButton#consoleLogButton:pressed {
+    border-radius: 3px;
+    background-color: rgba(230, 230, 230, 100);
 }

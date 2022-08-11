@@ -24,7 +24,6 @@ class AssetWindow(QWidget):
     def _setWidget(self):
         self.resize(200, 400)
         self.setWindowTitle("资源管理器")
-        self._searchListView.hide()
 
     def _setSignal(self):
         self._searchLine.textChanged.connect(self._search)

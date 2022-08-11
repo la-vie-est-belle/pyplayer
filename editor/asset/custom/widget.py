@@ -1,5 +1,6 @@
 import os
 import shutil
+import platform
 from pathlib import Path
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -25,7 +26,7 @@ class ProjectTreeView(QTreeView):
         self._setPath(self._projectPath)
 
     def _setWidget(self):
-        self.setObjectName("projectTreeView")
+        self.setObjectName("assetProjectTreeView")
         self.setModel(self._fileSystemModel)
 
         self.setAcceptDrops(True)
@@ -57,7 +58,7 @@ class ProjectTreeView(QTreeView):
     def _openFile(self, index):
         if not self._fileSystemModel.isDir(index):
             path = self._fileSystemModel.filePath(index)
-            os.system(f"/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code {self._projectPath} {path}")
+            os.system(f"open -a Visual\ Studio\ Code.app {self._projectPath} {path}")
 
     def _createNewFolder(self):
         folderName, ok = QInputDialog.getText(self, "新建文件夹", "请输入文件夹名称")
@@ -272,10 +273,13 @@ class SearchLine(QLineEdit):
         self._setWindowAttribute()
 
     def _setWindowAttribute(self):
-        self.setObjectName("searchLine")
+        self.setObjectName("assetSearchLine")
         self.setPlaceholderText("搜索资源")
         self.setFocusPolicy(Qt.ClickFocus)
         self.setAttribute(Qt.WA_MacShowFocusRect, 0)
+
+    def contextMenuEvent(self, event):
+        pass
 
 
 class SearchListView(QListView):
@@ -289,6 +293,7 @@ class SearchListView(QListView):
         self._setSignal()
 
     def _setWidget(self):
+        self.hide()
         self.setModel(self._standardItemModel)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
@@ -298,9 +303,16 @@ class SearchListView(QListView):
     def _openFile(self, index):
         item = self._standardItemModel.itemFromIndex(index)
         itemPath = item.toolTip()
-        if Path(itemPath).is_file():
-            projectPath = Path('.').cwd().parent.parent
-            os.system(f"/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code {projectPath} {itemPath}")
+        if Path(itemPath).is_dir():
+            return
+
+        system = platform.system()
+        projectPath = Path('.').cwd().parent.parent
+        if system == "Darwin":
+            os.system(f"open -a Visual\ Studio\ Code.app {projectPath} {itemPath}")
+        elif system == "Windows":
+            # windows上根据用户设置的应用路径来打开
+            ...
 
     def setResult(self, matchList):
         self._standardItemModel.clear()
