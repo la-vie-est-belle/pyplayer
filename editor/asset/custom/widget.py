@@ -5,7 +5,7 @@ from pathlib import Path
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from .menu import ProjectTreeViewMenu
+from editor.asset.custom.menu import ProjectTreeViewMenu
 
 
 class ProjectTreeView(QTreeView):
@@ -110,6 +110,8 @@ class ProjectTreeView(QTreeView):
                 path = Path(self._fileSystemModel.filePath(index))
                 shutil.rmtree(path) if path.is_dir() else path.unlink()
             except FileNotFoundError:
+                # 目录被删除又删除目录内的文件时会出现FileNotFoundError
+                # 这里通过try-except来解决
                 pass
 
         self.update()

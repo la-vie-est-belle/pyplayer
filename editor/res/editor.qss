@@ -45,3 +45,12 @@ QPushButton#consoleLogButton:pressed {
     border-radius: 3px;
     background-color: rgba(230, 230, 230, 100);
 }
+
+/* hierarchy */
+QLineEdit#hierarchySearchLine {
+    padding-left: 2px;
+}
+
+QTreeView#hierarchyItemTreeView::item:hover {
+    color: rgba(0, 0, 255, 180);
+}

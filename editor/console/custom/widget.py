@@ -5,7 +5,7 @@ from pathlib import Path
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from .menu import LogListViewMenu
+from editor.console.custom.menu import LogListViewMenu
 
 
 """

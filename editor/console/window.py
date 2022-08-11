@@ -2,7 +2,7 @@ import re
 import sys
 from pathlib import Path
 from PyQt5.QtWidgets import *
-from custom.widget import LogListView, SearchLine, SearchListView, ClearButton, OpenLogButton, LogLevelComboBox
+from editor.console.custom.widget import LogListView, SearchLine, SearchListView, ClearButton, OpenLogButton, LogLevelComboBox
 
 
 class ConsoleWindow(QWidget):
