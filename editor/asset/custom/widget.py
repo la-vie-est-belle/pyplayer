@@ -251,7 +251,7 @@ class ProjectTreeView(QTreeView):
         """用于实现文件被剪切时的效果"""
         super(ProjectTreeView, self).drawRow(painter, option, index)
         brush = QBrush(QColor(0, 105, 217, 50))
-        pen = QPen(QColor(0, 105, 217, 50))
+        pen = QPen(QColor(0, 0, 0, 0))
         painter.setBrush(brush)
         painter.setPen(pen)
 

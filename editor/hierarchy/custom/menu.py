@@ -10,9 +10,9 @@ class ItemTreeViewMenu(QObject):
     copySignal = pyqtSignal()
     cutSignal = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, hierarchyTreeView):
         super(ItemTreeViewMenu, self).__init__()
-        self._clipboard = QApplication.clipboard()
+        self.hierarchyTreeView = hierarchyTreeView
 
         # 主菜单和子菜单
         self._itemMainMenu = QMenu()
@@ -68,9 +68,9 @@ class ItemTreeViewMenu(QObject):
         self._blankAreaMainMenu.addAction(self._pasteAction)
 
     def execItemMainMenu(self, pos):
-        # self._pasteAction.setEnabled(bool(self._clipboard.text()))
+        self._pasteAction.setEnabled(bool(self.hierarchyTreeView.copyIndexDict or self.hierarchyTreeView.cutIndexDict))
         self._itemMainMenu.exec(pos)
 
     def execBlankAreaMainMenu(self, pos):
-        # self._pasteAction.setEnabled(bool(self._clipboard.text()))
+        self._pasteAction.setEnabled(bool(self.hierarchyTreeView.copyIndexDict or self.hierarchyTreeView.cutIndexDict))
         self._blankAreaMainMenu.exec(pos)
