@@ -1,7 +1,3 @@
-import os
-import shutil
-import platform
-from pathlib import Path
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -13,6 +9,7 @@ class HierarchyItem(QStandardItem):
     def __init__(self, name, uuid=None):
         super(HierarchyItem, self).__init__(name)
         self.uuid = uuid if uuid else getUUID()
+        self.setToolTip(self.uuid)
 
 
 class ItemTreeView(QTreeView):
@@ -37,6 +34,7 @@ class ItemTreeView(QTreeView):
         item.setChild(0, item2)
         self._standardItemModel.appendRow(item)
 
+        self.setAcceptDrops(True)
         self.setDragEnabled(True)
         self.setHeaderHidden(True)
         self.setModel(self._standardItemModel)
@@ -47,7 +45,6 @@ class ItemTreeView(QTreeView):
 
     def _setSignal(self):
         # self.clicked.connect(self._showItem)
-        # self.doubleClicked.connect(self._locate)
         self._contextMenu.cutSignal.connect(self._cut)
         self._contextMenu.copySignal.connect(self._copy)
         self._contextMenu.pasteSignal.connect(self._paste)
@@ -62,13 +59,10 @@ class ItemTreeView(QTreeView):
         item = self._standardItemModel.itemFromIndex(index)
         print(item.uuid)
 
-    def _locate(self, index):
-        """定位"""
-        # 在层级管理器中定位
-        ...
-
-        # 在场景管理器中定位
-        ...
+    def locate(self, index):
+        self.clearSelection()
+        self.expand(index.parent())
+        self.selectionModel().select(index, QItemSelectionModel.Select)
 
     def _rename(self):
         self.edit(self._currentClickedIndex)
@@ -159,13 +153,10 @@ class ItemTreeView(QTreeView):
             item = self._standardItemModel.itemFromIndex(index)
             itemsToDelete.append(item)
 
-        #############################################
-        # 为什么某个节点有三个子节点时，删除就会导致崩溃？？？#
-        #############################################
         for item in itemsToDelete:
             try:
                 if item.parent():
-                    item.parent().setRowCount(0)
+                    item.parent().removeRow(item.row())
                 else:
                     self._standardItemModel.removeRow(item.row())
             except RuntimeError:
@@ -177,14 +168,13 @@ class ItemTreeView(QTreeView):
         for childIndex in childIndexList:
             childItem = HierarchyItem(childIndex.data(), self._standardItemModel.itemFromIndex(childIndex).uuid)
             parentItem.appendRow(childItem)
-            self.expand(self._standardItemModel.indexFromItem(parentItem))
             if indexDict.get(childIndex):
                 self._pasteItemForCutRecursively(indexDict, indexDict[childIndex], childItem)
 
     def _pasteForCopy(self):
         if not self._currentClickedIndex.isValid():
             for parentIndex, childIndexList in self.copyIndexDict.items():
-                parentItem = HierarchyItem(parentIndex.data(), self._standardItemModel.itemFromIndex(parentIndex).uuid)
+                parentItem = HierarchyItem(parentIndex.data())
 
                 # 检查是否是字典中最顶层的项
                 for temp in list(self.copyIndexDict.values()):
@@ -261,6 +251,14 @@ class ItemTreeView(QTreeView):
             self._getChildItemRecursively(indexDict, childIndex)
             count += 1
 
+    def getAllItems(self):
+        indexDict = {}
+        for row in range(self._standardItemModel.rowCount()):
+            index = self._standardItemModel.item(row, 0).index()
+            self._getChildItemRecursively(indexDict, index)
+
+        return indexDict
+
     def contextMenuEvent(self, event):
         index = self.indexAt(event.pos())
         self._currentClickedIndex = index
@@ -269,6 +267,23 @@ class ItemTreeView(QTreeView):
             self._contextMenu.execBlankAreaMainMenu(event.globalPos())
         else:
             self._contextMenu.execItemMainMenu(event.globalPos())
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat("application/x-qabstractitemmodeldatalist"):
+            event.accept()
+
+    def dragMoveEvent(self, event):
+        ...
+
+    def dropEvent(self, event):
+        index = self.indexAt(event.pos())
+        self._currentClickedIndex = index
+
+        # 拖放的时候就用剪切的逻辑
+        # 应该把之前剪切的内容清空
+        # 否则可能会造成混乱（报错）
+        self._cut()
+        self._pasteForCut()
 
     def mousePressEvent(self, event):
         super(ItemTreeView, self).mousePressEvent(event)
@@ -295,6 +310,26 @@ class ItemTreeView(QTreeView):
             painter.drawRect(x, y, width, height)
 
 
+class SearchComboBox(QComboBox):
+    def __init__(self):
+        super(SearchComboBox, self).__init__()
+        self._searchChoice = "名称"
+        self._setUI()
+
+    def _setUI(self):
+        self._setWidget()
+        self._setSignal()
+
+    def _setWidget(self):
+        self.addItems(["名称", "UUID"])
+
+    def _setSignal(self):
+        self.currentTextChanged.connect(lambda: self.setSearchChoice)
+
+    def setSearchChoice(self, text):
+        self._searchChoice = text
+
+
 class SearchLine(QLineEdit):
     def __init__(self):
         super(SearchLine, self).__init__()
@@ -315,6 +350,7 @@ class SearchLine(QLineEdit):
 class SearchListView(QListView):
     def __init__(self):
         super(SearchListView, self).__init__()
+        self._standardItemModel = QStandardItemModel()
         self._setUI()
 
     def _setUI(self):
@@ -322,5 +358,31 @@ class SearchListView(QListView):
 
     def _setWidget(self):
         self.hide()
+        self.setModel(self._standardItemModel)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+    def setResult(self, matchList, searchComboBoxText):
+        self._standardItemModel.clear()
+
+        for index in matchList:
+            model = index.model()
+            item = model.itemFromIndex(index)
+            newItem = HierarchyItem(index.data(), item.uuid)
+
+            # 如果是按照名称搜索，则tooltip设置为节点路径信息
+            # 如果是按照UUID搜索，则tooltip设置为节点UUID
+            toolTip = index.data()
+            if searchComboBoxText == "名称":
+                while True:
+                    if index.parent().data():
+                        toolTip = f"{index.parent().data()}/{toolTip}"
+                        index = index.parent()
+                    else:
+                        break
+            else:
+                toolTip = newItem.uuid
+
+            newItem.setToolTip(toolTip)
+            self._standardItemModel.appendRow(newItem)
 
 
