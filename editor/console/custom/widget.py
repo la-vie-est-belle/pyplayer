@@ -7,6 +7,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from editor.console.custom.menu import LogListViewMenu
 
+print()
 
 """
 日志输出到文件中
@@ -14,7 +15,7 @@ from editor.console.custom.menu import LogListViewMenu
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-logFile = Path("./log/console.log")
+logFile = Path(__file__).parent.parent / "log" / "console.log"
 logFile.touch()
 
 fileHandler = logging.FileHandler(logFile, mode="a")

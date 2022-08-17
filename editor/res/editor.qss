@@ -15,7 +15,7 @@ QLineEdit#consoleSearchLine {
 }
 
 QPushButton#consoleClearButton {
-    border-image: url(../res/console/clear.png);
+    border-image: url(./res/console/clear.png);
     max-width: 17px;
     max-height: 17px;
 }
@@ -31,7 +31,7 @@ QPushButton#consoleClearButton:pressed {
 }
 
 QPushButton#consoleLogButton {
-    border-image: url(../res/console/log.png);
+    border-image: url(./res/console/log.png);
     max-width: 17px;
     max-height: 17px;
 }
@@ -53,4 +53,26 @@ QLineEdit#hierarchySearchLine {
 
 QTreeView#hierarchyItemTreeView::item:hover {
     color: rgba(0, 0, 255, 180);
+}
+
+/* scene */
+QLabel#itemLabel:focus {
+    border: 1px dashed black;
+}
+
+QLabel#itemLabel:hover {
+    border: 1px dashed black;
+}
+
+/* editor */
+QTabWidget#editorTab{
+    background-color: rgba(0, 0, 0, 0)l;
+}
+
+QTabWidget#editorTab::tab-bar{
+    alignment: left;
+}
+
+QTabWidget#editorTab::pane {
+
 }
