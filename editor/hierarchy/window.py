@@ -1,8 +1,6 @@
 import re
 import sys
 from pathlib import Path
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from editor.hierarchy.custom.widget import ItemTreeView, SearchLine, SearchListView, SearchComboBox
 
@@ -49,7 +47,7 @@ class HierarchyWindow(QWidget):
             return
 
         matchList = []
-        indexDict = self._itemTreeView.getAllItems()
+        indexDict = self._itemTreeView.getAllIndexes()
         searchComboBoxText = self._searchComboBox.currentText()
 
         # 如果是按照名称搜索，则匹配节点名称
@@ -83,7 +81,6 @@ class HierarchyWindow(QWidget):
                 self._itemTreeView.locate(treeViewIndex)
                 self._searchListView.hide()
                 self._itemTreeView.show()
-
 
 
 if __name__ == "__main__":

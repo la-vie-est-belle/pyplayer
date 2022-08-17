@@ -19,6 +19,7 @@ class ItemTreeView(QTreeView):
     def __init__(self):
         super(ItemTreeView, self).__init__()
         self._currentClickedIndex = None
+        self._rootItem = HierarchyItem("Window")
         self._contextMenu = ItemTreeViewMenu(self)
         self._standardItemModel = QStandardItemModel()
 
@@ -29,10 +30,8 @@ class ItemTreeView(QTreeView):
         self._setSignal()
 
     def _setWidget(self):
-        item = HierarchyItem('Scene')
-        item2 = HierarchyItem("Canvas")
-        item.setChild(0, item2)
-        self._standardItemModel.appendRow(item)
+        self._rootItem.setSelectable(False)
+        self._standardItemModel.appendRow(self._rootItem)
 
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
@@ -251,7 +250,7 @@ class ItemTreeView(QTreeView):
             self._getChildItemRecursively(indexDict, childIndex)
             count += 1
 
-    def getAllItems(self):
+    def getAllIndexes(self):
         indexDict = {}
         for row in range(self._standardItemModel.rowCount()):
             index = self._standardItemModel.item(row, 0).index()
@@ -279,11 +278,43 @@ class ItemTreeView(QTreeView):
         index = self.indexAt(event.pos())
         self._currentClickedIndex = index
 
-        # 拖放的时候就用剪切的逻辑
-        # 应该把之前剪切的内容清空
-        # 否则可能会造成混乱（报错）
+        # 在拖放前先判断之前是否有复制或剪切内容
+        # 有的话就先保存目标拖放节点的uuid
+        copyOrCut = ""
+        selectedItemsUUID = []
+        if self.copyIndexDict:
+            copyOrCut = "copy"
+            for index in self.selectedIndexes():
+                uuid = self._standardItemModel.itemFromIndex(index).uuid
+                selectedItemsUUID.append(uuid)
+        elif self.cutIndexDict:
+            copyOrCut = "cut"
+            for index in self.selectedIndexes():
+                uuid = self._standardItemModel.itemFromIndex(index).uuid
+                selectedItemsUUID.append(uuid)
+
+        # 拖放
         self._cut()
         self._pasteForCut()
+
+        if not copyOrCut:
+            return
+
+        # 拖放完毕后，重新对相应节点进行复制或剪切
+        # 从而更新copyIndexDict或cutIndexDict
+        allIndexes = self.getAllIndexes()
+        for uuid in selectedItemsUUID:
+            for index in allIndexes:
+                if uuid != self._standardItemModel.itemFromIndex(index).uuid:
+                    continue
+
+                self.selectionModel().select(index, QItemSelectionModel.Select)
+                break
+
+        if copyOrCut == "copy":
+            self._copy()
+        else:
+            self._cut()
 
     def mousePressEvent(self, event):
         super(ItemTreeView, self).mousePressEvent(event)
