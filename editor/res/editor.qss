@@ -55,7 +55,7 @@ QTreeView#hierarchyItemTreeView::item:hover {
     color: rgba(0, 0, 255, 180);
 }
 
-/* scene */
+/* item */
 QLabel#itemLabel:focus {
     border: 1px dashed black;
 }
@@ -64,15 +64,21 @@ QLabel#itemLabel:hover {
     border: 1px dashed black;
 }
 
-/* editor */
-QTabWidget#editorTab{
-    background-color: rgba(0, 0, 0, 0)l;
+/* scene */
+QGraphicsView#sceneWindowBase {
+    background-color: rgba(200, 200, 200, 255);
+    border: none;
 }
 
+QGraphicsView#sceneWindow {
+    border: none;
+}
+
+/* editor */
 QTabWidget#editorTab::tab-bar{
     alignment: left;
 }
 
 QTabWidget#editorTab::pane {
-
+    border: none;
 }

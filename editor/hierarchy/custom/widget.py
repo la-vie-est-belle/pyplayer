@@ -16,6 +16,9 @@ class ItemTreeView(QTreeView):
     copyIndexDict = {}
     cutIndexDict = {}
 
+    rootItemUUIDSignal = pyqtSignal(str)
+    newItemSignal = pyqtSignal(str, str, str)
+
     def __init__(self):
         super(ItemTreeView, self).__init__()
         self._currentClickedIndex = None
@@ -50,6 +53,9 @@ class ItemTreeView(QTreeView):
         self._contextMenu.renameSignal.connect(self._rename)
         self._contextMenu.deleteSignal.connect(self._delete)
         self._contextMenu.newItemSignal.connect(self._createNewItem)
+
+        # 发不出去，暂时先不管Window的uuid
+        # self.rootItemUUIDSignal.emit(self._rootItem.uuid)
 
     def _showItem(self, index):
         # 在属性窗口中显示属性
@@ -98,7 +104,9 @@ class ItemTreeView(QTreeView):
             self._standardItemModel.appendRow(newItem)
             return
 
-        self._standardItemModel.itemFromIndex(self._currentClickedIndex).appendRow(newItem)
+        parentItem = self._standardItemModel.itemFromIndex(self._currentClickedIndex)
+        parentItem.appendRow(newItem)
+        self.newItemSignal.emit(name, newItem.uuid, parentItem.uuid)
         self.expand(self._currentClickedIndex)
 
     def _paste(self):
@@ -109,27 +117,31 @@ class ItemTreeView(QTreeView):
 
     def _pasteForCut(self):
         if not self._currentClickedIndex.isValid():
-            for parentIndex, childIndexList in self.cutIndexDict.items():
-                parentItem = HierarchyItem(parentIndex.data(), self._standardItemModel.itemFromIndex(parentIndex).uuid)
-
-                # 检查是否是字典中最顶层的项
-                for temp in list(self.cutIndexDict.values()):
-                    if parentIndex in temp:
-                        break
-                else:
-                    self._standardItemModel.appendRow(parentItem)
-
-                # 添加子项
-                if childIndexList:
-                    self._pasteItemForCutRecursively(self.cutIndexDict, childIndexList, parentItem)
+            return
+            # for parentIndex, childIndexList in self.cutIndexDict.items():
+            #     parentItem = HierarchyItem(parentIndex.data(), self._standardItemModel.itemFromIndex(parentIndex).uuid)
+            #
+            #     # 检查是否是字典中最顶层的项
+            #     for temp in list(self.cutIndexDict.values()):
+            #         if parentIndex in temp:
+            #             break
+            #     else:
+            #         self._standardItemModel.appendRow(parentItem)
+            #
+            #     # 添加子项
+            #     if childIndexList:
+            #         self._pasteItemForCutRecursively(self.cutIndexDict, childIndexList, parentItem)
 
         else:
             # 父项不能剪切到它的子项中
+            # 剪切到自身节点上的话同样清空剪切内容
             for parentIndex, childIndexList in self.cutIndexDict.items():
                 if self._currentClickedIndex in childIndexList:
-                    QMessageBox.critical(self, "注意", "父项不能剪切到子项中。", QMessageBox.Yes)
+                    QMessageBox.critical(self, "注意", "父项不能移动到子项中。", QMessageBox.Yes)
+                    self.cutIndexDict.clear()
                     return
                 elif self._currentClickedIndex == parentIndex:
+                    self.cutIndexDict.clear()
                     return
 
             currentClickedItem = self._standardItemModel.itemFromIndex(self._currentClickedIndex)
@@ -172,19 +184,20 @@ class ItemTreeView(QTreeView):
 
     def _pasteForCopy(self):
         if not self._currentClickedIndex.isValid():
-            for parentIndex, childIndexList in self.copyIndexDict.items():
-                parentItem = HierarchyItem(parentIndex.data())
-
-                # 检查是否是字典中最顶层的项
-                for temp in list(self.copyIndexDict.values()):
-                    if parentIndex in temp:
-                        break
-                else:
-                    self._standardItemModel.appendRow(parentItem)
-
-                # 添加子项
-                if childIndexList:
-                    self._pasteItemForCopyRecursively(self.copyIndexDict, childIndexList, parentItem)
+            return
+            # for parentIndex, childIndexList in self.copyIndexDict.items():
+            #     parentItem = HierarchyItem(parentIndex.data())
+            #
+            #     # 检查是否是字典中最顶层的项
+            #     for temp in list(self.copyIndexDict.values()):
+            #         if parentIndex in temp:
+            #             break
+            #     else:
+            #         self._standardItemModel.appendRow(parentItem)
+            #
+            #     # 添加子项
+            #     if childIndexList:
+            #         self._pasteItemForCopyRecursively(self.copyIndexDict, childIndexList, parentItem)
 
         else:
             currentClickedItem = self._standardItemModel.itemFromIndex(self._currentClickedIndex)
@@ -263,7 +276,8 @@ class ItemTreeView(QTreeView):
         self._currentClickedIndex = index
 
         if not index.isValid():
-            self._contextMenu.execBlankAreaMainMenu(event.globalPos())
+            return
+            # self._contextMenu.execBlankAreaMainMenu(event.globalPos())
         else:
             self._contextMenu.execItemMainMenu(event.globalPos())
 
@@ -276,6 +290,12 @@ class ItemTreeView(QTreeView):
 
     def dropEvent(self, event):
         index = self.indexAt(event.pos())
+
+        # 无法拖放到Window节点外
+        # 如果需要，删除以下判断代码
+        if not index.isValid():
+            return
+
         self._currentClickedIndex = index
 
         # 在拖放前先判断之前是否有复制或剪切内容
@@ -297,6 +317,8 @@ class ItemTreeView(QTreeView):
         self._cut()
         self._pasteForCut()
 
+        # 在拖放前没有复制或剪切的话
+        # 就不需要更新copyIndexDict或cutIndexDict
         if not copyOrCut:
             return
 

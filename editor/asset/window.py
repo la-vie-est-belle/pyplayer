@@ -30,7 +30,7 @@ class AssetWindow(QWidget):
 
     def _setLayout(self):
         vLayout = QVBoxLayout(self)
-        vLayout.setSpacing(3)
+        vLayout.setSpacing(6)
         vLayout.addWidget(self._searchLine)
         vLayout.addWidget(self._searchListView)
         vLayout.addWidget(self._projectTreeView)

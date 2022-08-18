@@ -1,6 +1,7 @@
 import re
 import sys
 from pathlib import Path
+from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from editor.console.custom.widget import LogListView, SearchLine, SearchListView, ClearButton, OpenLogButton, LogLevelComboBox
 
@@ -37,9 +38,10 @@ class ConsoleWindow(QWidget):
         hLayout.setSpacing(8)
         hLayout.addWidget(self._clearBtn)
         hLayout.addWidget(self._openLogBtn)
-        hLayout.addWidget(self._searchLine)
         hLayout.addWidget(self._logLevelComboBox)
-        hLayout.setContentsMargins(5, 5, 5, 5)
+        hLayout.addWidget(self._searchLine)
+
+        hLayout.setContentsMargins(0, 0, 0, 0)
 
         allVLayout = QVBoxLayout(self)
         allVLayout.setSpacing(0)

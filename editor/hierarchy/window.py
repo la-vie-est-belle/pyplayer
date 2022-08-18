@@ -1,11 +1,16 @@
 import re
 import sys
 from pathlib import Path
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from editor.hierarchy.custom.widget import ItemTreeView, SearchLine, SearchListView, SearchComboBox
 
 
 class HierarchyWindow(QWidget):
+    rootItemSignal = pyqtSignal(str)
+    newItemSignal = pyqtSignal(str, str, str)
+
     def __init__(self):
         super(HierarchyWindow, self).__init__()
         self._searchLine = SearchLine()
@@ -28,17 +33,22 @@ class HierarchyWindow(QWidget):
         self._searchLine.textChanged.connect(self._search)
         self._searchListView.doubleClicked.connect(self._locate)
 
+        # 发不出去，暂时先不管Window的uuid
+        # self._itemTreeView.rootItemUUIDSignal.connect(self.rootItemSignal.emit)
+        self._itemTreeView.newItemSignal.connect(self.newItemSignal.emit)
+
     def _setLayout(self):
         hLayout = QHBoxLayout()
         vLayout = QVBoxLayout(self)
         hLayout.addWidget(self._searchComboBox)
         hLayout.addWidget(self._searchLine)
-        hLayout.setContentsMargins(0, 0, 5, 0)
-        vLayout.setSpacing(3)
+        hLayout.setContentsMargins(0, 0, 0, 0)
+        hLayout.setSpacing(0)
+        vLayout.setSpacing(0)
         vLayout.addLayout(hLayout)
         vLayout.addWidget(self._itemTreeView)
         vLayout.addWidget(self._searchListView)
-        vLayout.setContentsMargins(0, 3, 0, 0)
+        vLayout.setContentsMargins(0, 0, 0, 0)
 
     def _search(self, keyword):
         if not keyword:

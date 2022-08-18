@@ -31,7 +31,7 @@ class EditorWindow(QMainWindow):
         self._hierarchyWindow = HierarchyWindow()
         self._sceneWindowBase = SceneWindowBase()
 
-        self._widget = QWidget()
+        self._mainWindowCentralWidget = QWidget()
 
         self.setUI()
 
@@ -43,9 +43,8 @@ class EditorWindow(QMainWindow):
     def _setWidget(self):
         self.resize(1430, 800)
         self.setWindowTitle("PyPlayer")
-        self.setCentralWidget(self._widget)
+        self.setCentralWidget(self._mainWindowCentralWidget)
 
-    def _setSignal(self):
         self._leftTopWindowTab.setObjectName("editorTab")
         self._leftBottomWindowTab.setObjectName("editorTab")
         self._centerTopWindowTab.setObjectName("editorTab")
@@ -70,14 +69,20 @@ class EditorWindow(QMainWindow):
         self._leftCenterRightWindowsSplitter.addWidget(self._leftWindowsSplitter)
         self._leftCenterRightWindowsSplitter.addWidget(self._centerWindowsSplitter)
         self._leftCenterRightWindowsSplitter.addWidget(self._rightWindowTab)
-        self._leftCenterRightWindowsSplitter.setSizes([280, 800, 350])
+        self._leftCenterRightWindowsSplitter.setSizes([260, 820, 350])
+
+    def _setSignal(self):
+        # 发不出去，暂时先不管Window的uuid
+        # self._hierarchyWindow.rootItemSignal.connect(self._sceneWindow.setRootWindowUUID)
+        self._hierarchyWindow.newItemSignal.connect(self._sceneWindow.createNewItem)
 
     def _setLayout(self):
-        windowHLayout = QHBoxLayout(self._widget)
+        windowHLayout = QHBoxLayout(self._mainWindowCentralWidget)
         windowHLayout.addWidget(self._leftCenterRightWindowsSplitter)
 
-        sceneWindowHLayout = QHBoxLayout(self._sceneWindowBase)
-        sceneWindowHLayout.addWidget(self._sceneWindow)
+        self._sceneWindow.setParent(self._sceneWindowBase)
+        self._sceneWindow.move(100, 40)
+
 
 if __name__ == "__main__":
     app = QApplication([])
