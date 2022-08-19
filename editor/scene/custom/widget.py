@@ -4,6 +4,53 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 
+class Scene(QGraphicsScene):
+    selectionChangedSignal = pyqtSignal(list)
+    def __init__(self):
+        super(Scene, self).__init__()
+        self._isCtrlPressed = False
+        self._selectedItemsList = []
+
+    def mousePressEvent(self, event):
+        super(Scene, self).mousePressEvent(event)
+        for item in self.items():
+            item.setSelected(False)
+
+        focusItem = self.focusItem()
+        selectedUUIDList = []
+        if not focusItem:
+            self.selectionChangedSignal.emit(selectedUUIDList)
+            return
+
+        if self._isCtrlPressed:
+            if focusItem in self._selectedItemsList:
+                focusItem.setSelected(False)
+                self._selectedItemsList.remove(focusItem)
+            else:
+                self._selectedItemsList.append(focusItem)
+        else:
+            self._selectedItemsList = [focusItem]
+
+        for item in self._selectedItemsList:
+            selectedUUIDList.append(item.uuid)
+            item.setSelected(True)
+
+        self.selectionChangedSignal.emit(selectedUUIDList)
+
+    def keyPressEvent(self, event):
+        super(Scene, self).keyPressEvent(event)
+        if event.key() == Qt.Key.Key_Control:
+            self._isCtrlPressed = True
+
+    def keyReleaseEvent(self, event):
+        super(Scene, self).keyReleaseEvent(event)
+        if event.key() == Qt.Key.Key_Control:
+            self._isCtrlPressed = False
+
+
+
+
+
 class WindowSizeControl(QWidget):
     sizeChangedSignal = pyqtSignal(int, int)
 

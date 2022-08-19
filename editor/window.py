@@ -74,7 +74,12 @@ class EditorWindow(QMainWindow):
     def _setSignal(self):
         # 发不出去，暂时先不管Window的uuid
         # self._hierarchyWindow.rootItemSignal.connect(self._sceneWindow.setRootWindowUUID)
+        self._hierarchyWindow.cutItemSignal.connect(self._sceneWindow.resetItemParent)
+        self._hierarchyWindow.copyItemSignal.connect(self._sceneWindow.copyItems)
         self._hierarchyWindow.newItemSignal.connect(self._sceneWindow.createNewItem)
+        self._hierarchyWindow.deleteItemSignal.connect(self._sceneWindow.deleteItems)
+        self._hierarchyWindow.selectionChangedSignal.connect(self._sceneWindow.selectItems)
+        self._sceneWindow.selectionChangedSignal.connect(self._hierarchyWindow.selectItems)
 
     def _setLayout(self):
         windowHLayout = QHBoxLayout(self._mainWindowCentralWidget)

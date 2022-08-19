@@ -56,13 +56,8 @@ QTreeView#hierarchyItemTreeView::item:hover {
 }
 
 /* item */
-QLabel#itemLabel:focus {
-    border: 1px dashed black;
-}
 
-QLabel#itemLabel:hover {
-    border: 1px dashed black;
-}
+
 
 /* scene */
 QGraphicsView#sceneWindowBase {

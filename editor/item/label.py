@@ -24,11 +24,21 @@ class Label(QGraphicsProxyWidget):
     def _setWidget(self):
         self.setWidget(self._label)
         self.setObjectName("itemLabel")
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
         self._label.setAttribute(Qt.WA_TranslucentBackground)
+
+        palette = self.palette()
+        self.setFlag(QGraphicsItem.ItemIsFocusable, True)
+        palette.setColor(QPalette.Window, QColor(0, 105, 217, 20))
+        self.setPalette(palette)
 
     def _setSignal(self):
         ...
+
+    def setSelected(self, selected):
+        if selected:
+            self.setAutoFillBackground(True)
+        else:
+            self.setAutoFillBackground(False)
 
     def mousePressEvent(self, event):
         super(Label, self).mousePressEvent(event)
@@ -46,6 +56,9 @@ class Label(QGraphicsProxyWidget):
         super(Label, self).hoverEnterEvent(event)
         self.widget().setCursor(Qt.OpenHandCursor)
 
+    def hoverLeaveEvent(self, event):
+        super(Label, self).hoverLeaveEvent(event)
+
     def grabMouseEvent(self, event):
         super(Label, self).grabMouseEvent(event)
         self.setCursor(Qt.ClosedHandCursor)
@@ -53,3 +66,9 @@ class Label(QGraphicsProxyWidget):
     def ungrabMouseEvent(self, event):
         super(Label, self).ungrabMouseEvent(event)
         self.setCursor(Qt.OpenHandCursor)
+
+    # def focusInEvent(self, event):
+    #     super(Label, self).focusInEvent(event)
+    #
+    # def focusOutEvent(self, event):
+    #     super(Label, self).focusOutEvent(event)

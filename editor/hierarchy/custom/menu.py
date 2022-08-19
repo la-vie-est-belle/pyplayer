@@ -12,7 +12,7 @@ class ItemTreeViewMenu(QObject):
 
     def __init__(self, hierarchyTreeView):
         super(ItemTreeViewMenu, self).__init__()
-        self.hierarchyTreeView = hierarchyTreeView
+        self._hierarchyTreeView = hierarchyTreeView
 
         # 主菜单和子菜单
         self._itemMainMenu = QMenu()
@@ -68,9 +68,19 @@ class ItemTreeViewMenu(QObject):
         self._blankAreaMainMenu.addAction(self._pasteAction)
 
     def execItemMainMenu(self, pos):
-        self._pasteAction.setEnabled(bool(self.hierarchyTreeView.copyIndexDict or self.hierarchyTreeView.cutIndexDict))
+        # Window根节点无法被删除、复制或剪切
+        if self._hierarchyTreeView.currentIndex().data() == "Window":
+            self._deleteAction.setEnabled(False)
+            self._copyAction.setEnabled(False)
+            self._cutAction.setEnabled(False)
+        else:
+            self._deleteAction.setEnabled(True)
+            self._copyAction.setEnabled(True)
+            self._cutAction.setEnabled(True)
+
+        self._pasteAction.setEnabled(bool(self._hierarchyTreeView.copyIndexDict or self._hierarchyTreeView.cutIndexDict))
         self._itemMainMenu.exec(pos)
 
     def execBlankAreaMainMenu(self, pos):
-        self._pasteAction.setEnabled(bool(self.hierarchyTreeView.copyIndexDict or self.hierarchyTreeView.cutIndexDict))
+        self._pasteAction.setEnabled(bool(self._hierarchyTreeView.copyIndexDict or self._hierarchyTreeView.cutIndexDict))
         self._blankAreaMainMenu.exec(pos)

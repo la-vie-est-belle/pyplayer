@@ -8,8 +8,12 @@ from editor.hierarchy.custom.widget import ItemTreeView, SearchLine, SearchListV
 
 
 class HierarchyWindow(QWidget):
+    cutItemSignal = pyqtSignal(list)
     rootItemSignal = pyqtSignal(str)
+    copyItemSignal = pyqtSignal(list)
+    deleteItemSignal = pyqtSignal(list)
     newItemSignal = pyqtSignal(str, str, str)
+    selectionChangedSignal = pyqtSignal(list)
 
     def __init__(self):
         super(HierarchyWindow, self).__init__()
@@ -35,7 +39,11 @@ class HierarchyWindow(QWidget):
 
         # 发不出去，暂时先不管Window的uuid
         # self._itemTreeView.rootItemUUIDSignal.connect(self.rootItemSignal.emit)
+        self._itemTreeView.cutItemSignal.connect(self.cutItemSignal.emit)
         self._itemTreeView.newItemSignal.connect(self.newItemSignal.emit)
+        self._itemTreeView.copyItemSignal.connect(self.copyItemSignal.emit)
+        self._itemTreeView.deleteItemSignal.connect(self.deleteItemSignal.emit)
+        self._itemTreeView.selectionChangedSignal.connect(self.selectionChangedSignal.emit)
 
     def _setLayout(self):
         hLayout = QHBoxLayout()
@@ -49,6 +57,12 @@ class HierarchyWindow(QWidget):
         vLayout.addWidget(self._itemTreeView)
         vLayout.addWidget(self._searchListView)
         vLayout.setContentsMargins(0, 0, 0, 0)
+
+    def selectItems(self, selectedUUIDList):
+        self._itemTreeView.clearSelection()
+        for index in self._itemTreeView.getAllIndexes():
+            if index.model().itemFromIndex(index).uuid in selectedUUIDList:
+                self._itemTreeView.selectionModel().select(index, QItemSelectionModel.Select)
 
     def _search(self, keyword):
         if not keyword:
