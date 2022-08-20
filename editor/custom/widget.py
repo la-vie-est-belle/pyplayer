@@ -18,10 +18,9 @@ class Gizmo(QWidget):
         self._setLayout()
 
     def _setWidget(self):
-        self.setCursor(Qt.OpenHandCursor)
+        self.setCursor(Qt.SizeAllCursor)
         self.setObjectName("editorGizmo")
-        self.setFixedSize(20, 20)
-
+        self.setFixedSize(15, 15)
 
     def _setLayout(self):
         ...
@@ -30,7 +29,6 @@ class Gizmo(QWidget):
         super(Gizmo, self).mousePressEvent(event)
         self._startX = event.x()
         self._startY = event.y()
-        self.setCursor(Qt.ClosedHandCursor)
 
     def mouseMoveEvent(self, event):
         super(Gizmo, self).mouseMoveEvent(event)
@@ -38,11 +36,9 @@ class Gizmo(QWidget):
         disY = event.y() - self._startY
         self.move(self.x()+disX, self.y()+disY)
         self._WindowToMove.move(self.x()+disX+self.width()/2, self.y()+disY+self.height()/2)
-        self.setCursor(Qt.ClosedHandCursor)
 
     def mouseReleaseEvent(self, event):
         super(Gizmo, self).mouseReleaseEvent(event)
-        self.setCursor(Qt.OpenHandCursor)
         x = int(self._WindowToMove.x()-self.width()/2)
         y = int(self._WindowToMove.y()-self.height()/2)
         self.move(x, y)

@@ -5,7 +5,9 @@ from PyQt5.QtWidgets import *
 
 
 class Scene(QGraphicsScene):
+    showPropertySignal = pyqtSignal(dict)
     selectionChangedSignal = pyqtSignal(list)
+
     def __init__(self):
         super(Scene, self).__init__()
         self._isCtrlPressed = False
@@ -17,6 +19,7 @@ class Scene(QGraphicsScene):
         focusItem = self.focusItem()
         selectedUUIDList = []
         if not focusItem:
+            # self.showPropertySignal.emit({})
             self.selectionChangedSignal.emit(selectedUUIDList)
             for item in self.items():
                 item.setSelected(False)
@@ -35,6 +38,7 @@ class Scene(QGraphicsScene):
         for item in self.selectedItems():
             selectedUUIDList.append(item.uuid)
 
+        self.showPropertySignal.emit(focusItem.getProperties())
         self.selectionChangedSignal.emit(selectedUUIDList)
 
     def keyPressEvent(self, event):

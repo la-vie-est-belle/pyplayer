@@ -9,6 +9,7 @@ from editor.scene.window import SceneWindow
 from editor.asset.window import AssetWindow
 from editor.console.window import ConsoleWindow
 from editor.hierarchy.window import HierarchyWindow
+from editor.property.window import PropertyWindow
 from editor.custom.widget import SceneWindowBase
 from editor.custom.widget import Gizmo
 
@@ -31,6 +32,7 @@ class EditorWindow(QMainWindow):
         self._consoleWindow = ConsoleWindow()
         self._hierarchyWindow = HierarchyWindow()
         self._sceneWindowBase = SceneWindowBase()
+        self._propertyWindow = PropertyWindow()
         self._gizmo = Gizmo(self._sceneWindow)
 
         self._mainWindowCentralWidget = QWidget()
@@ -57,7 +59,7 @@ class EditorWindow(QMainWindow):
         self._leftBottomWindowTab.addTab(self._assetWindow, "资源窗口")
         self._centerTopWindowTab.addTab(self._sceneWindowBase, "场景窗口")
         self._centerBottomWindowTab.addTab(self._consoleWindow, "日志窗口")
-        self._rightWindowTab.addTab(QWidget(), "属性窗口")
+        self._rightWindowTab.addTab(self._propertyWindow, "属性窗口")
 
         self._leftWindowsSplitter.addWidget(self._leftTopWindowTab)
         self._leftWindowsSplitter.addWidget(self._leftBottomWindowTab)
@@ -81,7 +83,10 @@ class EditorWindow(QMainWindow):
         self._hierarchyWindow.newItemSignal.connect(self._sceneWindow.createNewItem)
         self._hierarchyWindow.deleteItemSignal.connect(self._sceneWindow.deleteItems)
         self._hierarchyWindow.selectionChangedSignal.connect(self._sceneWindow.selectItems)
+
+        self._sceneWindow.showPropertySignal.connect(self._propertyWindow.showPropertyWindow)
         self._sceneWindow.selectionChangedSignal.connect(self._hierarchyWindow.selectItems)
+
 
     def _setLayout(self):
         windowHLayout = QHBoxLayout(self._mainWindowCentralWidget)

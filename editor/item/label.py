@@ -34,6 +34,20 @@ class Label(QGraphicsProxyWidget):
     def _setSignal(self):
         ...
 
+    def getProperties(self):
+        properties = {
+            "type": "Label",
+            "uuid": self._uuid,
+            "posX": int(self.x()),
+            "posY": int(self.y()),
+            "text": self._label.text(),
+            "font": f'{self._label.font().family()} ; {self._label.font().pointSize()}',
+            "color": self._label.palette().color(QPalette.WindowText).name(),
+            "alignment": int(self._label.alignment()),
+        }
+
+        return properties
+
     def setSelected(self, selected):
         super(Label, self).setSelected(selected)
 

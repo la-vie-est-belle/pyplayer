@@ -5,10 +5,10 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from editor.item.label import Label
 from editor.scene.custom.widget import Scene, WindowSizeControl
-import PyQt5.sip as sip
 
 
 class SceneWindow(QGraphicsView):
+    showPropertySignal = pyqtSignal(dict)
     selectionChangedSignal = pyqtSignal(list)
 
     def __init__(self):
@@ -42,7 +42,7 @@ class SceneWindow(QGraphicsView):
 
     def _setSignal(self):
         self._windowSizeControl.sizeChangedSignal.connect(self._resize)
-        self._scene.focusItemChanged.connect(self._showItemInHierarchyWindow)
+        self._scene.showPropertySignal.connect(self.showPropertySignal.emit)
         self._scene.selectionChangedSignal.connect(self.selectionChangedSignal.emit)
 
     def _setLayout(self):
@@ -60,10 +60,6 @@ class SceneWindow(QGraphicsView):
         self.setFixedSize(newWidth, newHeight)
         self._scene.setSceneRect(0, 0, newWidth, newHeight)
 
-    def _showItemInHierarchyWindow(self, newFocusItem, oldFocusItem):
-        ...
-
-
     # 发不出去，暂时先不管Window的uuid
     # def setRootWindowUUID(self, uuid):
     #     print(444)
@@ -74,7 +70,6 @@ class SceneWindow(QGraphicsView):
         for uuid in deletedUUIDList:
             item = self._getItemByUUID(uuid)
             self._scene.removeItem(item)
-            sip.delete(item)
 
     def resetItemParent(self, cutItemList):
         # 通过uuid找到子项和新父项
@@ -92,7 +87,6 @@ class SceneWindow(QGraphicsView):
                 # childItem.setParentItem(0)
 
             childItem.setPos(10, 10)
-
 
     def copyItems(self, copyItemList):
         for itemInfo in copyItemList:
@@ -119,11 +113,18 @@ class SceneWindow(QGraphicsView):
         return None
 
     def selectItems(self, selectedUUIDList):
+        if not selectedUUIDList:
+            return
+
         for item in self._scene.items():
             item.setSelected(False)
             if item.uuid in selectedUUIDList:
                 item.setSelected(True)
-        ...
+
+        # 在selectedUUIDList中最后一个item就是focusItem
+        # 显示这个item的属性窗口
+        focusItem = self._getItemByUUID(selectedUUIDList[-1])
+        self.showPropertySignal.emit(focusItem.getProperties())
 
     def mouseReleaseEvent(self, event):
         super(SceneWindow, self).mouseReleaseEvent(event)
