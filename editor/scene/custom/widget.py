@@ -13,27 +13,27 @@ class Scene(QGraphicsScene):
 
     def mousePressEvent(self, event):
         super(Scene, self).mousePressEvent(event)
-        for item in self.items():
-            item.setSelected(False)
 
         focusItem = self.focusItem()
         selectedUUIDList = []
         if not focusItem:
             self.selectionChangedSignal.emit(selectedUUIDList)
+            for item in self.items():
+                item.setSelected(False)
             return
 
         if self._isCtrlPressed:
-            if focusItem in self._selectedItemsList:
+            if focusItem in self.selectedItems():
                 focusItem.setSelected(False)
-                self._selectedItemsList.remove(focusItem)
             else:
-                self._selectedItemsList.append(focusItem)
+                focusItem.setSelected(True)
         else:
-            self._selectedItemsList = [focusItem]
+            for item in self.items():
+                item.setSelected(False)
+            focusItem.setSelected(True)
 
-        for item in self._selectedItemsList:
+        for item in self.selectedItems():
             selectedUUIDList.append(item.uuid)
-            item.setSelected(True)
 
         self.selectionChangedSignal.emit(selectedUUIDList)
 

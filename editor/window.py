@@ -10,6 +10,7 @@ from editor.asset.window import AssetWindow
 from editor.console.window import ConsoleWindow
 from editor.hierarchy.window import HierarchyWindow
 from editor.custom.widget import SceneWindowBase
+from editor.custom.widget import Gizmo
 
 
 class EditorWindow(QMainWindow):
@@ -30,6 +31,7 @@ class EditorWindow(QMainWindow):
         self._consoleWindow = ConsoleWindow()
         self._hierarchyWindow = HierarchyWindow()
         self._sceneWindowBase = SceneWindowBase()
+        self._gizmo = Gizmo(self._sceneWindow)
 
         self._mainWindowCentralWidget = QWidget()
 
@@ -87,6 +89,12 @@ class EditorWindow(QMainWindow):
 
         self._sceneWindow.setParent(self._sceneWindowBase)
         self._sceneWindow.move(100, 40)
+
+        # gizmo设置在sceneWindow左上角
+        self._gizmo.setParent(self._sceneWindowBase)
+        x = int(self._sceneWindow.x()-self._gizmo.width()/2)
+        y = int(self._sceneWindow.y()-self._gizmo.height()/2)
+        self._gizmo.move(x, y)
 
 
 if __name__ == "__main__":

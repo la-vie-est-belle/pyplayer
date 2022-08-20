@@ -18,9 +18,6 @@ class SceneWindow(QGraphicsView):
         self._allItemsList = [self]
         self._windowSizeControl = WindowSizeControl(self)
 
-        self._startX = None
-        self._startY = None
-
         self._setUI()
 
     @property
@@ -33,9 +30,11 @@ class SceneWindow(QGraphicsView):
         self._setLayout()
 
     def _setWidget(self):
+        self.setObjectName("sceneWindow")
+        self.setDragMode(QGraphicsView.RubberBandDrag)
+
         self.setScene(self._scene)
         self.setFixedSize(600, 400)
-        self.setObjectName("sceneWindow")
         self._scene.setSceneRect(0, 0, self.width(), self.height())
 
         brush = QBrush(QColor(236, 236, 236))
@@ -126,18 +125,14 @@ class SceneWindow(QGraphicsView):
                 item.setSelected(True)
         ...
 
-    # def mousePressEvent(self, event):
-    #     super(SceneWindow, self).mousePressEvent(event)
-    #     self._startX = event.x()
-    #     self._startY = event.y()
-    #     # event.accept()
-    #
-    # def mouseMoveEvent(self, event):
-    #     super(SceneWindow, self).mouseMoveEvent(event)
-    #     disX = event.x() - self._startX
-    #     disY = event.y() - self._startY
-    #     self.move(self.x()+disX, self.y()+disY)
-    #     # event.accept()
+    def mouseReleaseEvent(self, event):
+        super(SceneWindow, self).mouseReleaseEvent(event)
+        selectedUUIDLIst = []
+        for item in self._scene.selectedItems():
+            selectedUUIDLIst.append(item.uuid)
+            item.setSelected(True)
+
+        self.selectionChangedSignal.emit(selectedUUIDLIst)
 
     def resizeEvent(self, event):
         """始终确保尺寸调节控件位于窗口右下角"""

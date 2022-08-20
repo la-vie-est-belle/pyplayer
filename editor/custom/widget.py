@@ -4,6 +4,58 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 
+class Gizmo(QWidget):
+    def __init__(self, WindowToMove):
+        super(Gizmo, self).__init__()
+        self._startX = None
+        self._startY = None
+        self._WindowToMove = WindowToMove
+
+        self._setUI()
+
+    def _setUI(self):
+        self._setWidget()
+        self._setLayout()
+
+    def _setWidget(self):
+        self.setCursor(Qt.OpenHandCursor)
+        self.setObjectName("editorGizmo")
+        self.setFixedSize(20, 20)
+
+
+    def _setLayout(self):
+        ...
+
+    def mousePressEvent(self, event):
+        super(Gizmo, self).mousePressEvent(event)
+        self._startX = event.x()
+        self._startY = event.y()
+        self.setCursor(Qt.ClosedHandCursor)
+
+    def mouseMoveEvent(self, event):
+        super(Gizmo, self).mouseMoveEvent(event)
+        disX = event.x() - self._startX
+        disY = event.y() - self._startY
+        self.move(self.x()+disX, self.y()+disY)
+        self._WindowToMove.move(self.x()+disX+self.width()/2, self.y()+disY+self.height()/2)
+        self.setCursor(Qt.ClosedHandCursor)
+
+    def mouseReleaseEvent(self, event):
+        super(Gizmo, self).mouseReleaseEvent(event)
+        self.setCursor(Qt.OpenHandCursor)
+        x = int(self._WindowToMove.x()-self.width()/2)
+        y = int(self._WindowToMove.y()-self.height()/2)
+        self.move(x, y)
+
+
+    def paintEvent(self, event):
+        super(Gizmo, self).paintEvent(event)
+        painter = QPainter(self)
+        painter.setPen(QColor(0, 105, 217, 50))
+        painter.setBrush(QColor(0, 105, 217, 20))
+        painter.drawEllipse(self.rect())
+
+
 class SceneWindowBase(QGraphicsView):
     def __init__(self):
         super(SceneWindowBase, self).__init__()
