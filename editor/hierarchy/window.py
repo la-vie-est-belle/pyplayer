@@ -37,12 +37,11 @@ class HierarchyWindow(QWidget):
         self._searchLine.textChanged.connect(self._search)
         self._searchListView.doubleClicked.connect(self._locate)
 
-        # 发不出去，暂时先不管Window的uuid
-        # self._itemTreeView.rootItemUUIDSignal.connect(self.rootItemSignal.emit)
         self._itemTreeView.cutItemSignal.connect(self.cutItemSignal.emit)
         self._itemTreeView.newItemSignal.connect(self.newItemSignal.emit)
         self._itemTreeView.copyItemSignal.connect(self.copyItemSignal.emit)
         self._itemTreeView.deleteItemSignal.connect(self.deleteItemSignal.emit)
+        self._itemTreeView.rootItemUUIDSignal.connect(self.rootItemSignal.emit)
         self._itemTreeView.selectionChangedSignal.connect(self.selectionChangedSignal.emit)
 
     def _setLayout(self):

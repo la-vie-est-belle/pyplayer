@@ -54,17 +54,26 @@ class SceneWindow(QGraphicsView):
         newWidth = self.width() + widthChangedValue
         newHeight = self.height() + heightChangedValue
 
-        if newWidth <= 100 or newHeight <= 50:
+        if newWidth < 0 or newHeight < 0:
             return
 
         self.setFixedSize(newWidth, newHeight)
         self._scene.setSceneRect(0, 0, newWidth, newHeight)
 
-    # 发不出去，暂时先不管Window的uuid
-    # def setRootWindowUUID(self, uuid):
-    #     print(444)
-    #     self._uuid = uuid
-    #     print(self._uuid)
+    def getProperties(self):
+        properties = {
+            "type": "Root",
+            "uuid": self._uuid,
+            "posX": int(self.x()),
+            "posY": int(self.y()),
+            "width": int(self.width()),
+            "height": int(self.height())
+        }
+
+        return properties
+
+    def setRootWindowUUID(self, uuid):
+        self._uuid = uuid
 
     def deleteItems(self, deletedUUIDList):
         for uuid in deletedUUIDList:
@@ -121,8 +130,9 @@ class SceneWindow(QGraphicsView):
         for item in self._scene.items():
             item.setSelected(False)
 
+        # 没有选中就显示根节点属性窗口
         if not selectedUUIDList:
-            self.showPropertySignal.emit({})
+            self.showPropertySignal.emit(self.getProperties())
             return
 
         for item in self._scene.items():
@@ -135,13 +145,40 @@ class SceneWindow(QGraphicsView):
         self.showPropertySignal.emit(focusItem.getProperties())
 
     def updateProperty(self, uuid, property, value):
+        # 更新窗口属性
+        # 刚开始发送来的uuid可能是None
+        if not uuid or uuid == self._uuid:
+            self._updateRootWindowProperty(property, value)
+            return
+
+        # 更新项属性
         item = self._getItemByUUID(uuid)
         item.updateProperty(property, value)
+
+    def _updateRootWindowProperty(self, property, value):
+        if property == "width":
+            if not value:
+                self.setFixedWidth(0)
+            else:
+                self.setFixedWidth(int(value))
+            self._scene.setSceneRect(0, 0, self.width(), self.height())
+
+        elif property == "height":
+            if not value:
+                self.setFixedHeight(0)
+            else:
+                self.setFixedHeight(int(value))
+            self._scene.setSceneRect(0, 0, self.width(), self.height())
 
     def resizeEvent(self, event):
         """始终确保尺寸调节控件位于窗口右下角"""
         super(SceneWindow, self).resizeEvent(event)
         self._setLayout()
+
+        # resizeEvent会在窗口初始化时触发
+        # 相当于一开始就发送根节点数据给属性窗口
+        # 解决了信号一开始发送无效的问题
+        self.showPropertySignal.emit(self.getProperties())
 
 
 if __name__ == "__main__":

@@ -6,8 +6,8 @@ from editor.hierarchy.custom.menu import ItemTreeViewMenu
 
 
 class HierarchyItem(QStandardItem):
-    def __init__(self, name, itemType, uuid=None):
-        super(HierarchyItem, self).__init__(name)
+    def __init__(self, objectName, itemType, uuid=None):
+        super(HierarchyItem, self).__init__(objectName)
         self.itemType = itemType
         self.uuid = uuid if uuid else getUUID()
         self.setToolTip(self.uuid)
@@ -26,10 +26,11 @@ class ItemTreeView(QTreeView):
 
     def __init__(self):
         super(ItemTreeView, self).__init__()
+        self._isRootUUIDSent = False
         self._currentClickedIndex = None
         self._contextMenu = ItemTreeViewMenu(self)
         self._standardItemModel = QStandardItemModel()
-        self._rootItem = HierarchyItem("Window", "Window")
+        self._rootItem = HierarchyItem("Window", "Root")
 
         self._setUI()
 
@@ -58,9 +59,6 @@ class ItemTreeView(QTreeView):
         self._contextMenu.renameSignal.connect(self._rename)
         self._contextMenu.deleteSignal.connect(self._delete)
         self._contextMenu.newItemSignal.connect(self._createNewItem)
-
-        # 发不出去，暂时先不管Window的uuid
-        # self.rootItemUUIDSignal.emit(self._rootItem.uuid)
 
     def _showItemInSceneAndPropertyWindow(self):
         # 在属性窗口中显示属性
@@ -395,6 +393,17 @@ class ItemTreeView(QTreeView):
             width = option.rect.width()
             height = option.rect.height()
             painter.drawRect(x, y, width, height)
+
+    def resizeEvent(self, event):
+        super(ItemTreeView, self).resizeEvent(event)
+
+        # resizeEvent会在窗口初始化时触发
+        # 解决了信号一开始发送无效的问题
+        # _isRootUUIDSent变量确保只发送一次
+        if not self._isRootUUIDSent:
+            self.rootItemUUIDSignal.emit(self._rootItem.uuid)
+            self._isRootUUIDSent = True
+
 
 
 class SearchComboBox(QComboBox):

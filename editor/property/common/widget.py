@@ -4,6 +4,38 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 
+class ObjectNameLine(QLineEdit):
+    def __init__(self, objectName):
+        super(ObjectNameLine, self).__init__()
+        self._objectName = objectName
+        self._setUI()
+
+    def _setUI(self):
+        self._setWidget()
+
+    def _setWidget(self):
+        self.setText(self._objectName)
+        self.setPlaceholderText("请输入对象名")
+
+    def contextMenuEvent(self, event):
+        pass
+
+
+class SizeLineEdit(QLineEdit):
+    def __init__(self):
+        super(SizeLineEdit, self).__init__()
+        self._setUI()
+
+    def _setUI(self):
+        self._setWidget()
+
+    def _setWidget(self):
+        self.setValidator(QRegExpValidator(QRegExp('[0-9]+')))
+
+    def contextMenuEvent(self, evnet):
+        pass
+
+
 class PosLineEdit(QLineEdit):
     def __init__(self):
         super(PosLineEdit, self).__init__()

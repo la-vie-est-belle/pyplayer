@@ -43,10 +43,16 @@ class Scene(QGraphicsScene):
 
     def mouseMoveEvent(self, event):
         super(Scene, self).mouseMoveEvent(event)
+
+        # 当鼠标从层级窗口移动到场景窗口时
+        # mouseMoveEvent不知道会什么会被触发
+        # 这会导致某个item的属性窗口被显示出来
+        # 所以先暂时不在该事件中更新属性窗口
+
         # 移动过程中更新属性窗口
-        focusItem = self.focusItem()
-        if focusItem:
-            self.showPropertySignal.emit(focusItem.getProperties())
+        # focusItem = self.focusItem()
+        # if focusItem:
+        #     self.showPropertySignal.emit(focusItem.getProperties())
 
     def mouseReleaseEvent(self, event):
         """针对框选"""

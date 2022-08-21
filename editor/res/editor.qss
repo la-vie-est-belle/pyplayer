@@ -1,6 +1,19 @@
+/* editor */
+QLineEdit {
+    padding-left: 2px;
+}
+
+QTabWidget#editorTab::tab-bar{
+    alignment: left;
+}
+
+QTabWidget#editorTab::pane {
+    border: none;
+}
+
+
 /* asset */
 QLineEdit#assetSearchLine {
-    padding-left: 2px;
 }
 
 QTreeView#assetProjectTreeView::item:hover {
@@ -9,7 +22,6 @@ QTreeView#assetProjectTreeView::item:hover {
 
 /* console */
 QLineEdit#consoleSearchLine {
-    padding-left: 2px;
     min-height: 20px;
     border-radius: 2px;
 }
@@ -48,7 +60,7 @@ QPushButton#consoleLogButton:pressed {
 
 /* hierarchy */
 QLineEdit#hierarchySearchLine {
-    padding-left: 2px;
+
 }
 
 QTreeView#hierarchyItemTreeView::item:hover {
@@ -66,14 +78,5 @@ QGraphicsView#sceneWindowBase {
 }
 
 QGraphicsView#sceneWindow {
-    border: none;
-}
-
-/* editor */
-QTabWidget#editorTab::tab-bar{
-    alignment: left;
-}
-
-QTabWidget#editorTab::pane {
     border: none;
 }
