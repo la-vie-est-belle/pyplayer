@@ -6,6 +6,8 @@ from editor.property.label.window import LabelPropertyWindow
 
 
 class PropertyWindow(QWidget):
+    updatePropertySignal = pyqtSignal(str, str, object)
+
     def __init__(self):
         super(PropertyWindow, self).__init__()
         self._labelPropertyWindow = LabelPropertyWindow()
@@ -21,7 +23,7 @@ class PropertyWindow(QWidget):
         self._labelPropertyWindow.hide()
 
     def _setSignal(self):
-        ...
+        self._labelPropertyWindow.updatePropertySignal.connect(self.updatePropertySignal.emit)
 
     def _setLayout(self):
         vLayout = QVBoxLayout(self)
@@ -30,7 +32,7 @@ class PropertyWindow(QWidget):
 
     def showPropertyWindow(self, properties):
         if not properties:
-            # self._labelPropertyWindow.hide()
+            self._labelPropertyWindow.hide()
             return
 
         if properties["type"] == "Label":

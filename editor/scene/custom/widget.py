@@ -11,15 +11,15 @@ class Scene(QGraphicsScene):
     def __init__(self):
         super(Scene, self).__init__()
         self._isCtrlPressed = False
-        self._selectedItemsList = []
 
     def mousePressEvent(self, event):
+        """针对ctrl键多选"""
         super(Scene, self).mousePressEvent(event)
 
         focusItem = self.focusItem()
         selectedUUIDList = []
         if not focusItem:
-            # self.showPropertySignal.emit({})
+            self.showPropertySignal.emit({})
             self.selectionChangedSignal.emit(selectedUUIDList)
             for item in self.items():
                 item.setSelected(False)
@@ -41,6 +41,37 @@ class Scene(QGraphicsScene):
         self.showPropertySignal.emit(focusItem.getProperties())
         self.selectionChangedSignal.emit(selectedUUIDList)
 
+    def mouseMoveEvent(self, event):
+        super(Scene, self).mouseMoveEvent(event)
+        # 移动过程中更新属性窗口
+        focusItem = self.focusItem()
+        if focusItem:
+            self.showPropertySignal.emit(focusItem.getProperties())
+
+    def mouseReleaseEvent(self, event):
+        """针对框选"""
+        super(Scene, self).mouseReleaseEvent(event)
+
+        # 框选
+        selectedUUIDLIst = []
+        for item in self.selectedItems():
+            selectedUUIDLIst.append(item.uuid)
+            item.setSelected(True)
+        self.selectionChangedSignal.emit(selectedUUIDLIst)
+
+        # 移动结束后更新属性窗口
+        focusItem = self.focusItem()
+        if focusItem:
+            self.showPropertySignal.emit(focusItem.getProperties())
+
+    def mouseDoubleClickEvent(self, event):
+        """
+        在场景中双击某个项时，
+        层级窗口中的项会在选中和不选中之间切换。
+        为了避免这种现象，这里让mouseDoubleClickEvent无效
+        """
+        pass
+
     def keyPressEvent(self, event):
         super(Scene, self).keyPressEvent(event)
         if event.key() == Qt.Key.Key_Control:
@@ -50,9 +81,6 @@ class Scene(QGraphicsScene):
         super(Scene, self).keyReleaseEvent(event)
         if event.key() == Qt.Key.Key_Control:
             self._isCtrlPressed = False
-
-
-
 
 
 class WindowSizeControl(QWidget):

@@ -30,13 +30,19 @@ class TextEdit(QTextEdit):
 
     def _setWidget(self):
         self.setPlaceholderText("请输入文本...")
+        self.setLineWrapMode(QTextEdit.NoWrap)
 
 
 class AlignButton(QPushButton):
-    def __init__(self, alignType):
+    def __init__(self, alignType, alignTypeAlias):
         super(AlignButton, self).__init__()
         self._alignType = alignType
+        self._alignTypeAlias = alignTypeAlias
         self._setUI()
+
+    @property
+    def alignType(self):
+        return self._alignType
 
     def _setUI(self):
         self._setWidget()
@@ -45,7 +51,7 @@ class AlignButton(QPushButton):
         self._setIcon()
 
     def _setIcon(self):
-        iconPath = Path(__file__).parent.parent.parent / f"res/property/{self._alignType}.png"
+        iconPath = Path(__file__).parent.parent.parent / f"res/property/{self._alignTypeAlias}.png"
         self.setIcon(QIcon(str(iconPath)))
 
 

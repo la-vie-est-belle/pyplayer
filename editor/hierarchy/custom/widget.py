@@ -1,7 +1,7 @@
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from editor.uitl import getUUID
+from editor.util import getUUID
 from editor.hierarchy.custom.menu import ItemTreeViewMenu
 
 
@@ -120,8 +120,8 @@ class ItemTreeView(QTreeView):
 
         parentItem = self._standardItemModel.itemFromIndex(self._currentClickedIndex)
         parentItem.appendRow(newItem)
-        self.newItemSignal.emit(name, newItem.uuid, parentItem.uuid)
         self.expand(self._currentClickedIndex)
+        self.newItemSignal.emit(name, newItem.uuid, parentItem.uuid)
 
     def _paste(self):
         if self.cutIndexDict:

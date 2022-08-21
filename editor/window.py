@@ -87,6 +87,8 @@ class EditorWindow(QMainWindow):
         self._sceneWindow.showPropertySignal.connect(self._propertyWindow.showPropertyWindow)
         self._sceneWindow.selectionChangedSignal.connect(self._hierarchyWindow.selectItems)
 
+        self._propertyWindow.updatePropertySignal.connect(self._sceneWindow.updateProperty)
+
 
     def _setLayout(self):
         windowHLayout = QHBoxLayout(self._mainWindowCentralWidget)

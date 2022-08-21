@@ -22,6 +22,7 @@ class Label(QGraphicsProxyWidget):
         self._setSignal()
 
     def _setWidget(self):
+        self.setFlag(QGraphicsItem.ItemIsFocusable, True)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setWidget(self._label)
         self.setObjectName("itemLabel")
@@ -48,12 +49,52 @@ class Label(QGraphicsProxyWidget):
 
         return properties
 
+    def updateProperty(self, property, value):
+        if property == "posX":
+            if not value:
+                self.setX(0)
+            elif value == "-":
+                ...
+            else:
+                self.setX(int(value))
+
+        elif property == "posY":
+            if not value:
+                self.setY(0)
+            elif value == "-":
+                ...
+            else:
+                self.setY(int(value))
+
+        elif property == "text":
+            self._label.setText(value)
+            self._label.adjustSize()
+
+        elif property == "font":
+            font = QFont()
+            font.setFamily(value.split(";")[0].strip())
+            font.setPointSize(int(value.split(";")[1].strip()))
+            self._label.setFont(font)
+            self._label.adjustSize()
+
+        elif property == "color":
+            palette = self._label.palette()
+            palette.setColor(QPalette.WindowText, QColor(value))
+            self._label.setPalette(palette)
+
+        elif property == "alignment":
+            self._label.setAlignment(value)
+
     def setSelected(self, selected):
         super(Label, self).setSelected(selected)
 
         if selected:
+            # 有焦点的话可以让item在框选时显示属性
+            # 不过在ctrl键按下时有bug，属性窗口更新不及时
+            # self.setFocus(Qt.OtherFocusReason)
             self.setAutoFillBackground(True)
         else:
+            # self.clearFocus()
             self.setAutoFillBackground(False)
 
     def mousePressEvent(self, event):

@@ -94,7 +94,10 @@ class SceneWindow(QGraphicsView):
 
     def createNewItem(self, itemType, uuid, parentUUID):
         if itemType == "Label":
-            self._createLabel(uuid, parentUUID)
+            newItem = self._createLabel(uuid, parentUUID)
+
+        # 创建新的项时，显示该项的属性窗口
+        self.showPropertySignal.emit(newItem.getProperties())
 
     def _createLabel(self, uuid, parentUUID):
         item = self._getItemByUUID(parentUUID)
@@ -106,6 +109,8 @@ class SceneWindow(QGraphicsView):
             label.setPos(10, 10)
             self._scene.addItem(label)
 
+        return label
+
     def _getItemByUUID(self, uuid):
         for item in self.items():
             if item.uuid == uuid:
@@ -113,11 +118,14 @@ class SceneWindow(QGraphicsView):
         return None
 
     def selectItems(self, selectedUUIDList):
+        for item in self._scene.items():
+            item.setSelected(False)
+
         if not selectedUUIDList:
+            self.showPropertySignal.emit({})
             return
 
         for item in self._scene.items():
-            item.setSelected(False)
             if item.uuid in selectedUUIDList:
                 item.setSelected(True)
 
@@ -126,14 +134,9 @@ class SceneWindow(QGraphicsView):
         focusItem = self._getItemByUUID(selectedUUIDList[-1])
         self.showPropertySignal.emit(focusItem.getProperties())
 
-    def mouseReleaseEvent(self, event):
-        super(SceneWindow, self).mouseReleaseEvent(event)
-        selectedUUIDLIst = []
-        for item in self._scene.selectedItems():
-            selectedUUIDLIst.append(item.uuid)
-            item.setSelected(True)
-
-        self.selectionChangedSignal.emit(selectedUUIDLIst)
+    def updateProperty(self, uuid, property, value):
+        item = self._getItemByUUID(uuid)
+        item.updateProperty(property, value)
 
     def resizeEvent(self, event):
         """始终确保尺寸调节控件位于窗口右下角"""

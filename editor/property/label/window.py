@@ -4,13 +4,12 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from editor.uitl import setAlignBtnEnabled
+from editor.util import setAlignBtnEnabled
 from editor.property.common.widget import PosLineEdit, TextEdit, AlignButton, FontLineEdit, ColorLineEdit
 
 
 class LabelPropertyWindow(QWidget):
-    updateLabelPosXSignal = pyqtSignal(int)
-    updateLabelPosYSignal = pyqtSignal(int)
+    updatePropertySignal = pyqtSignal(str, str, object)
 
     def __init__(self):
         super(LabelPropertyWindow, self).__init__()
@@ -21,12 +20,12 @@ class LabelPropertyWindow(QWidget):
         self._fontLine = FontLineEdit()
         self._colorLine = ColorLineEdit()
 
-        self._alignLeftBtn = AlignButton("alignLeft")
-        self._alignHCenterBtn = AlignButton("alignHCenter")
-        self._alignRightBtn = AlignButton("alignRight")
-        self._alignTopBtn = AlignButton("alignTop")
-        self._alignVCenterBtn = AlignButton("alignVCenter")
-        self._alignBottomBtn = AlignButton("alignBottom")
+        self._alignLeftBtn = AlignButton(Qt.AlignLeft, "alignLeft")
+        self._alignHCenterBtn = AlignButton(Qt.AlignHCenter, "alignHCenter")
+        self._alignRightBtn = AlignButton(Qt.AlignRight, "alignRight")
+        self._alignTopBtn = AlignButton(Qt.AlignTop, "alignTop")
+        self._alignVCenterBtn = AlignButton(Qt.AlignBottom, "alignVCenter")
+        self._alignBottomBtn = AlignButton(Qt.AlignVCenter, "alignBottom")
         self._hAlignBtnList = [self._alignLeftBtn, self._alignHCenterBtn, self._alignRightBtn]
         self._vAlignBtnList = [self._alignTopBtn, self._alignVCenterBtn, self._alignBottomBtn]
 
@@ -50,8 +49,11 @@ class LabelPropertyWindow(QWidget):
         for btn in self._vAlignBtnList:
             btn.clicked.connect(self._setVerticalAlignment)
 
-        self._posXLine.textChanged.connect(self._updatePosX)
-        self._posYLine.textChanged.connect(self._updatePosY)
+        self._posXLine.textChanged.connect(lambda: self.updatePropertySignal.emit(self._uuid, "posX", self._posXLine.text()))
+        self._posYLine.textChanged.connect(lambda: self.updatePropertySignal.emit(self._uuid, "posY", self._posYLine.text()))
+        self._textEdit.textChanged.connect(lambda: self.updatePropertySignal.emit(self._uuid, "text", self._textEdit.toPlainText()))
+        self._fontLine.textChanged.connect(lambda: self.updatePropertySignal.emit(self._uuid, "font", self._fontLine.text()))
+        self._colorLine.textChanged.connect(lambda: self.updatePropertySignal.emit(self._uuid, "color", self._colorLine.text()))
 
     def _setLayout(self):
         posHLayout = QHBoxLayout()
@@ -104,18 +106,38 @@ class LabelPropertyWindow(QWidget):
         setAlignBtnEnabled(self._hAlignBtnList, self._vAlignBtnList, properties["alignment"])
 
     def _setHorizontalAlignment(self):
+        horizontalAlignment = None
         for btn in self._hAlignBtnList:
             if btn == self.sender():
                 btn.setEnabled(False)
+                horizontalAlignment = btn.alignType
             else:
                 btn.setEnabled(True)
 
+        verticalAlignment = None
+        for btn in self._vAlignBtnList:
+            if not btn.isEnabled():
+                verticalAlignment = btn.alignType
+                break
+
+        self.updatePropertySignal.emit(self._uuid, "alignment", horizontalAlignment | verticalAlignment)
+
     def _setVerticalAlignment(self):
+        verticalAlignment = None
         for btn in self._vAlignBtnList:
             if btn == self.sender():
                 btn.setEnabled(False)
+                verticalAlignment = btn.alignType
             else:
                 btn.setEnabled(True)
+
+        horizontalAlignment = None
+        for btn in self._hAlignBtnList:
+            if not btn.isEnabled():
+                horizontalAlignment = btn.alignType
+                break
+
+        self.updatePropertySignal.emit(self._uuid, "alignment", horizontalAlignment | verticalAlignment)
 
     def _updatePosX(self):
         x = int(self._posXLine.text())
@@ -124,7 +146,6 @@ class LabelPropertyWindow(QWidget):
     def _updatePosY(self):
         y = int(self._posXLine.text())
         self.updateLabelPosXSignal.emit(y)
-
 
 
 if __name__ == "__main__":
